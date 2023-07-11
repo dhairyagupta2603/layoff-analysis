@@ -1,0 +1,68 @@
+---
+title: "Data Analysis anova by month"
+output: html_notebook
+---
+```{r}
+library(dplyr)
+```
+
+```{r}
+path <- "./data/layoffs_clean.csv"
+data <- read.csv(path)
+```
+
+```{r}
+set.seed(1234)
+dplyr::sample_n(data, 10)
+```
+```{r}
+str(data)
+```
+```{r}
+date <- format(as.Date(data$date), "%m-%Y")
+data$date_m <- date
+head(data)
+```
+
+
+
+```{r}
+data_by_month <- data %>% group_by(date_m)  %>%
+                    summarise(total_laid_off_c = sum(total_laid_off),
+                              funds_raised_C = sum(funds_raised),
+                              .groups = 'drop')
+ 
+data_by_month
+```
+
+```{r}
+x1 <- data_by_month$total_laid_off_c
+x2 <- data_by_month$funds_raised_C
+
+laid_off_stand <- c(scale(x1))
+funds_raise_stand <- c(scale(x2))
+```
+
+```{r}
+laid_off_stand
+```
+```{r}
+funds_raise_stand
+```
+
+```{r}
+data_aov <- data.frame(data_by_month$date_m, laid_off_stand, funds_raise_stand)
+data_aov
+```
+
+```{r}
+# H0: The effect of funds_raised by all the companies in a specific month does not depend on the effect of total_laid_off in that month (a.k.a. no interaction effect).
+# H1: The effect of funds_raised by all the companies in a specific month depends on the effect of total_laid_off in that month (a.k.a. interaction effect). 
+
+res.aov <- aov(funds_raise_stand ~ laid_off_stand, data = data_aov)
+res.aov
+```
+```{r}
+summary(res.aov)[[1]][["Pr(>F)"]][1]
+```
+***AS THE P VALUE IS less than THAN 0.05 WE CAN reject H0***

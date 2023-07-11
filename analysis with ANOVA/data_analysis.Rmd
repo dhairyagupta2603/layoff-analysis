@@ -1,0 +1,64 @@
+---
+title: "Data Analysis anova by country"
+output: html_notebook
+---
+```{r}
+library(dplyr)
+```
+
+```{r}
+path <- "./data/layoffs_clean.csv"
+data <- read.csv(path)
+```
+
+```{r}
+# Show a random sample
+set.seed(1234)
+dplyr::sample_n(data, 10)
+```
+
+```{r}
+str(data)
+```
+
+```{r}
+data_by_country <- data %>% group_by(country)  %>%
+                    summarise(total_laid_off_c = sum(total_laid_off),
+                              funds_raised_C = sum(funds_raised),
+                              .groups = 'drop')
+ 
+View(data_by_country)
+```
+
+```{r}
+x1 <- data_by_country$total_laid_off_c
+x2 <- data_by_country$funds_raised_C
+
+laid_off_stand <- c(scale(x1))
+funds_raise_stand <- c(scale(x2))
+```
+
+```{r}
+laid_off_stand
+```
+```{r}
+funds_raise_stand
+```
+
+```{r}
+data_aov <- data.frame(data_by_country$country, laid_off_stand, funds_raise_stand)
+data_aov
+```
+```{r}
+# H0: The effect of funds_raised by all the companies in a country does not depend on the effect of total_laid_off by the country (a.k.a. no interaction effect).
+# H1: The effect of funds_raised by all the companies in a country depends on the effect of total_laid_off by the country (a.k.a. interaction effect). 
+
+res.aov <- aov(funds_raise_stand ~ laid_off_stand, data = data_aov)
+res.aov
+```
+```{r}
+summary(res.aov)[[1]][["Pr(>F)"]][1]
+```
+***AS THE P VALUE IS less than THAN 0.05 WE CAN reject H0***
+
+
